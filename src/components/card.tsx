@@ -121,13 +121,20 @@ export const DonationCard = ({
 				padding={4}
 			>
 				<Flex flex={1} bg="blue.200">
-					{imageUrl && (
+					{imageUrl ? (
 						<Image
 							objectFit="contain"
 							boxSize="100%"
 							height="200px"
 							src={imageUrl}
 							alt="donation url"
+						/>
+					) : (
+						<Box
+							objectFit="contain"
+							boxSize="100%"
+							height="200px"
+							width="100%"
 						/>
 					)}
 				</Flex>
