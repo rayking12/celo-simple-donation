@@ -38,6 +38,7 @@ import {
 	Card,
 	CardBody,
 } from "@chakra-ui/react";
+import { create } from "ipfs-http-client";
 
 const DONATION_CONTRACT_ADDRESS = "0x26f04253AADB78789833De8B2444929781cB85F7";
 
@@ -127,11 +128,36 @@ const CreateCause = ({
 	const handleInput = (field: keyof typeof values, value: string) => {
 		setValues((prev) => ({ ...prev, [field]: value }));
 	};
+	const [file, setFile] = useState<any>(null);
+
+	const retrieveFile = (e: any) => {
+		const data = e.target.files[0];
+		const reader = new window.FileReader();
+		reader.readAsArrayBuffer(data);
+		reader.onloadend = () => {
+			setFile(Buffer.from(reader.result as ArrayBuffer));
+		};
+
+		e.preventDefault();
+	};
+
+	const [imageUrl, setImageUrl] = useState("");
 
 	const handleImageChange = (event: any) => {
 		const file = event.target.files[0];
 		const imageUrl = URL.createObjectURL(file);
 		handleInput("imageUrl", imageUrl);
+	};
+	const handleSave = async () => {
+		createCause({
+			args: [
+				values.name,
+				address,
+				values.description,
+				parseEther(`${Number(values.goalAmount)}`),
+				values.imageUrl,
+			],
+		});
 	};
 
 	return (
@@ -158,7 +184,6 @@ const CreateCause = ({
 					<FormControl my={8}>
 						<FormLabel>Description</FormLabel>
 						<Input
-							ref={initialRef}
 							placeholder="Description of cause"
 							value={values.description}
 							onChange={(event) =>
@@ -168,31 +193,14 @@ const CreateCause = ({
 					</FormControl>
 					<FormControl my={5}>
 						<FormLabel>Upload image</FormLabel>
-						<Button
-							as="label"
-							htmlFor="fileInput"
-							variant="outline"
-							cursor="pointer"
-							size="sm"
-						>
-							Choose File
-							<input
-								id="fileInput"
-								type="file"
-								accept=".jpg,.jpeg,.png"
-								onChange={handleImageChange}
-								hidden
-							/>
-						</Button>
-					</FormControl>
-					{values.imageUrl && (
-						<Image
-							src={values.imageUrl}
-							alt="image"
-							width={"100px"}
-							// height={"100px"}
+
+						<Input
+							placeholder="Image Url"
+							value={values.imageUrl}
+							onChange={(event) => handleInput("imageUrl", event.target.value)}
 						/>
-					)}
+					</FormControl>
+
 					<FormControl mt={4}>
 						<FormLabel>Goal Amount</FormLabel>
 						<Input
@@ -211,18 +219,10 @@ const CreateCause = ({
 						colorScheme="blue"
 						mr={3}
 						isLoading={isLoading}
-						isDisabled={!values.name || !values.goalAmount || !values.imageUrl}
-						onClick={() =>
-							createCause({
-								args: [
-									values.name,
-									address,
-									values.description,
-									parseEther(`${Number(values.goalAmount)}`),
-									values.imageUrl,
-								],
-							})
+						isDisabled={
+							!values.name || !values.goalAmount || !values.description
 						}
+						onClick={handleSave}
 					>
 						Save
 					</Button>
