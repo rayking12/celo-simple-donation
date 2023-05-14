@@ -28,7 +28,6 @@ import {
 	ModalBody,
 	useToast,
 	ModalCloseButton,
-	Image,
 	Spinner,
 	useDisclosure,
 	ModalContent,
