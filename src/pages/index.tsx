@@ -279,7 +279,10 @@ export default function Home() {
 				<Button onClick={onOpen}>Request Donation</Button>
 			</Flex>
 			<ClientOnly>
-				<Flex mx={8}>
+				<Flex
+					mx={{ sm: 2, md: 8 }}
+					flexDirection={{ base: "column", md: "row" }}
+				>
 					{loadingAllCauses && (
 						<Flex
 							justifyContent={"center"}
