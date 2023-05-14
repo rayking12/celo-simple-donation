@@ -139,13 +139,6 @@ const CreateCause = ({
 		e.preventDefault();
 	};
 
-	const [imageUrl, setImageUrl] = useState("");
-
-	const handleImageChange = (event: any) => {
-		const file = event.target.files[0];
-		const imageUrl = URL.createObjectURL(file);
-		handleInput("imageUrl", imageUrl);
-	};
 	const handleSave = async () => {
 		createCause({
 			args: [
