@@ -38,7 +38,6 @@ import {
 	Card,
 	CardBody,
 } from "@chakra-ui/react";
-import { create } from "ipfs-http-client";
 
 const DONATION_CONTRACT_ADDRESS = "0x26f04253AADB78789833De8B2444929781cB85F7";
 
