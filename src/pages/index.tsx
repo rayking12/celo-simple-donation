@@ -1,123 +1,330 @@
-import Head from 'next/head'
-import Image from 'next/image'
-import { Inter } from 'next/font/google'
-import styles from '@/styles/Home.module.css'
+import {
+	useAccount,
+	useConnect,
+	useDisconnect,
+	useBalance,
+	useContractWrite,
+	useContractRead,
+	Address,
+} from "wagmi";
+import { InjectedConnector } from "wagmi/connectors/injected";
+import { celoAlfajores } from "wagmi/chains";
+import { DonationCard } from "@/components/card";
+import { parseEther, formatEther } from "viem";
+import ClientOnly from "@/client";
+import { useState, useRef } from "react";
+import donationAbi from "../contract/donation.abi.json";
+import {
+	Flex,
+	Spacer,
+	Button,
+	Heading,
+	Modal,
+	ModalOverlay,
+	ModalHeader,
+	FormControl,
+	FormLabel,
+	ModalFooter,
+	ModalBody,
+	useToast,
+	ModalCloseButton,
+	Image,
+	Spinner,
+	useDisclosure,
+	ModalContent,
+	Input,
+	Box,
+	Text,
+	Card,
+	CardBody,
+} from "@chakra-ui/react";
 
-const inter = Inter({ subsets: ['latin'] })
+const DONATION_CONTRACT_ADDRESS = "0xB2217f2d41537E26daEb41d23cA5C3E68c236622";
 
+const NavBar = () => {
+	const { address, isConnected } = useAccount();
+	const toast = useToast();
+
+	const { connect } = useConnect({
+		connector: new InjectedConnector({
+			chains: [celoAlfajores],
+		}),
+		chainId: celoAlfajores.id,
+		onError(error) {
+			toast({
+				title: "Error",
+				description:
+					error.name === "ConnectorNotFoundError"
+						? "Please install the CeloExtensionWallet."
+						: error.message,
+				position: "top-right",
+				status: "error",
+				duration: 3000,
+				isClosable: true,
+			});
+		},
+	});
+
+	const { data: balance } = useBalance({
+		address: address,
+		watch: true,
+	});
+
+	const { disconnect } = useDisconnect();
+
+	return (
+		<Flex alignItems="center" p="4" boxShadow="md">
+			<Heading as="h1" size="lg" fontWeight="bold">
+				Donation Center
+			</Heading>
+			<Spacer />
+			{isConnected ? (
+				<Flex alignItems={"center"}>
+					<Box>
+						<Card mr={4} size={"sm"}>
+							<CardBody>
+								<Text fontWeight={600}>
+									{balance && `${balance?.formatted} ${balance?.symbol}`}
+								</Text>
+							</CardBody>
+						</Card>
+					</Box>
+					<Button colorScheme="blue" onClick={() => disconnect()}>
+						Disconnect
+					</Button>
+				</Flex>
+			) : (
+				<Button colorScheme="blue" onClick={() => connect()}>
+					Connect
+				</Button>
+			)}
+		</Flex>
+	);
+};
+
+const CreateCause = ({
+	isOpen,
+	onClose,
+	createCause,
+	isLoading,
+}: {
+	isOpen: boolean;
+	onClose: () => void;
+	createCause: (args: any) => void;
+	isLoading: boolean;
+}) => {
+	const initialRef = useRef(null);
+	const finalRef = useRef(null);
+	const [values, setValues] = useState({
+		name: "",
+		goalAmount: "",
+		description: "",
+		imageUrl: "",
+	});
+
+	const { address } = useAccount();
+
+	const handleInput = (field: keyof typeof values, value: string) => {
+		setValues((prev) => ({ ...prev, [field]: value }));
+	};
+
+	const handleImageChange = (event: any) => {
+		const file = event.target.files[0];
+		const imageUrl = URL.createObjectURL(file);
+		handleInput("imageUrl", imageUrl);
+	};
+
+	return (
+		<Modal
+			initialFocusRef={initialRef}
+			finalFocusRef={finalRef}
+			isOpen={isOpen}
+			onClose={onClose}
+		>
+			<ModalOverlay />
+			<ModalContent>
+				<ModalHeader>Create donation cause</ModalHeader>
+				<ModalCloseButton />
+				<ModalBody pb={6}>
+					<FormControl>
+						<FormLabel>Name</FormLabel>
+						<Input
+							ref={initialRef}
+							placeholder="Name of cause"
+							value={values.name}
+							onChange={(event) => handleInput("name", event.target.value)}
+						/>
+					</FormControl>
+					<FormControl my={8}>
+						<FormLabel>Description</FormLabel>
+						<Input
+							ref={initialRef}
+							placeholder="Description of cause"
+							value={values.description}
+							onChange={(event) =>
+								handleInput("description", event.target.value)
+							}
+						/>
+					</FormControl>
+					<FormControl my={5}>
+						<FormLabel>Upload image</FormLabel>
+						<Button
+							as="label"
+							htmlFor="fileInput"
+							variant="outline"
+							cursor="pointer"
+							size="sm"
+						>
+							Choose File
+							<input
+								id="fileInput"
+								type="file"
+								accept=".jpg,.jpeg,.png"
+								onChange={handleImageChange}
+								hidden
+							/>
+						</Button>
+					</FormControl>
+					{values.imageUrl && (
+						<Image
+							src={values.imageUrl}
+							alt="image"
+							width={"100px"}
+							// height={"100px"}
+						/>
+					)}
+					<FormControl mt={4}>
+						<FormLabel>Goal Amount</FormLabel>
+						<Input
+							placeholder="e.g 1000.00"
+							type="number"
+							value={values.goalAmount}
+							onChange={(event) =>
+								handleInput("goalAmount", event.target.value)
+							}
+						/>
+					</FormControl>
+				</ModalBody>
+
+				<ModalFooter>
+					<Button
+						colorScheme="blue"
+						mr={3}
+						isLoading={isLoading}
+						isDisabled={!values.name || !values.goalAmount || !values.imageUrl}
+						onClick={() =>
+							createCause({
+								args: [
+									values.name,
+									address,
+									values.description,
+									parseEther(`${Number(values.goalAmount)}`),
+									values.imageUrl,
+								],
+							})
+						}
+					>
+						Save
+					</Button>
+					<Button onClick={onClose}>Cancel</Button>
+				</ModalFooter>
+			</ModalContent>
+		</Modal>
+	);
+};
 export default function Home() {
-  return (
-    <>
-      <Head>
-        <title>Create Next App</title>
-        <meta name="description" content="Generated by create next app" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-      <main className={styles.main}>
-        <div className={styles.description}>
-          <p>
-            Get started by editing&nbsp;
-            <code className={styles.code}>src/pages/index.tsx</code>
-          </p>
-          <div>
-            <a
-              href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              By{' '}
-              <Image
-                src="/vercel.svg"
-                alt="Vercel Logo"
-                className={styles.vercelLogo}
-                width={100}
-                height={24}
-                priority
-              />
-            </a>
-          </div>
-        </div>
+	const contractOpts = (fnName: string, args?: any) => {
+		return {
+			address: DONATION_CONTRACT_ADDRESS as Address,
+			abi: donationAbi,
+			functionName: fnName,
+			watch: true,
+			onError(error: any) {
+				toast({
+					title: "Error",
+					description: error.message,
+					position: "top-right",
+					status: "error",
+					duration: 3000,
+					isClosable: true,
+				});
+			},
+			args: args || [],
+		};
+	};
 
-        <div className={styles.center}>
-          <Image
-            className={styles.logo}
-            src="/next.svg"
-            alt="Next.js Logo"
-            width={180}
-            height={37}
-            priority
-          />
-          <div className={styles.thirteen}>
-            <Image
-              src="/thirteen.svg"
-              alt="13"
-              width={40}
-              height={31}
-              priority
-            />
-          </div>
-        </div>
+	const { data = [], isLoading: loadingAllCauses } = useContractRead(
+		contractOpts("getAllCauses")
+	);
 
-        <div className={styles.grid}>
-          <a
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <h2 className={inter.className}>
-              Docs <span>-&gt;</span>
-            </h2>
-            <p className={inter.className}>
-              Find in-depth information about Next.js features and&nbsp;API.
-            </p>
-          </a>
+	const donationRequests: any = data;
+	const { isOpen, onOpen, onClose } = useDisclosure();
 
-          <a
-            href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <h2 className={inter.className}>
-              Learn <span>-&gt;</span>
-            </h2>
-            <p className={inter.className}>
-              Learn about Next.js in an interactive course with&nbsp;quizzes!
-            </p>
-          </a>
+	const { write: createCause, isLoading } = useContractWrite({
+		...contractOpts("createCause"),
+		onSuccess() {
+			onClose();
+			toast({
+				title: "Success",
+				description: "Cause requested successfully",
+				position: "top-right",
+				status: "success",
+				duration: 3000,
+				isClosable: true,
+			});
+		},
+	});
 
-          <a
-            href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <h2 className={inter.className}>
-              Templates <span>-&gt;</span>
-            </h2>
-            <p className={inter.className}>
-              Discover and deploy boilerplate example Next.js&nbsp;projects.
-            </p>
-          </a>
+	const { address } = useAccount();
 
-          <a
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <h2 className={inter.className}>
-              Deploy <span>-&gt;</span>
-            </h2>
-            <p className={inter.className}>
-              Instantly deploy your Next.js site to a shareable URL
-              with&nbsp;Vercel.
-            </p>
-          </a>
-        </div>
-      </main>
-    </>
-  )
+	const toast = useToast();
+
+	console.log(donationRequests);
+
+	return (
+		<>
+			<NavBar />
+			<Flex alignItems={"center"} justifyContent={"center"} mt={4}>
+				<Button onClick={onOpen}>Request Donation</Button>
+			</Flex>
+			<ClientOnly>
+				<Flex mx={8}>
+					{loadingAllCauses && (
+						<Flex
+							justifyContent={"center"}
+							alignItems={"center"}
+							width={"100vw"}
+							height="400px"
+						>
+							<Spinner size="xl" />
+						</Flex>
+					)}
+					{donationRequests &&
+						!loadingAllCauses &&
+						donationRequests.map((item: any, index: number) => (
+							<DonationCard
+								key={index}
+								index={index + 1}
+								title={item.name}
+								description={item.description}
+								address={address}
+								contractOpts={contractOpts}
+								loggedInAddress={item.beneficiary}
+								withdrawalAmount={formatEther(item?.withdrawnAmount || 0)}
+								closed={item?.closed}
+								imageUrl={item.imageUrl}
+								currentAmount={formatEther(item.currentAmount)}
+								target={formatEther(item.goalAmount)}
+							/>
+						))}
+				</Flex>
+			</ClientOnly>
+			<CreateCause
+				isOpen={isOpen}
+				onClose={onClose}
+				createCause={createCause}
+				isLoading={isLoading}
+			/>
+		</>
+	);
 }
