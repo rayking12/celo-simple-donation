@@ -23,10 +23,9 @@ import {
 	Image,
 	Stack,
 } from "@chakra-ui/react";
-import { useContractWrite } from "wagmi";
-
+import { useContractWrite, useContractRead } from "wagmi";
 import { useState } from "react";
-import { parseEther } from "viem";
+import { parseEther, formatEther } from "viem";
 
 interface IDonate {
 	imageUrl: string;
@@ -56,6 +55,7 @@ export const DonationCard = ({
 	address,
 }: IDonate) => {
 	const [donationAmount, setDonationAmount] = useState("");
+
 	const getPercentage = () => {
 		return (Number(currentAmount) * 100) / Number(target);
 	};
@@ -63,6 +63,12 @@ export const DonationCard = ({
 	const isOwner = loggedInAddress === address;
 
 	const { isOpen, onOpen, onClose } = useDisclosure();
+
+	const {
+		isOpen: donorsIsOpen,
+		onOpen: donorsOnOpen,
+		onClose: donorsOnClose,
+	} = useDisclosure();
 
 	const toast = useToast();
 
@@ -109,6 +115,13 @@ export const DonationCard = ({
 			});
 		},
 	});
+
+	const { data = [], isLoading: loadingAllCauses } = useContractRead({
+		...contractOpts("getTopDonors"),
+		args: [index],
+	});
+
+	const donors: any = data;
 
 	return (
 		<Center py={6} ml={4}>
@@ -221,7 +234,36 @@ export const DonationCard = ({
 							</Box>
 						</Stack>
 					)}
-					<Progress value={getPercentage()} size="sm" colorScheme="pink" />
+					<Box mt={4}>
+						<Text fontSize="12px" fontWeight={500}>
+							Progress
+						</Text>
+
+						<Flex alignItems={"center"}>
+							<Box width={"80%"}>
+								<Progress
+									value={getPercentage()}
+									size="sm"
+									colorScheme="pink"
+								/>
+							</Box>
+							<Text ml={1} fontSize="12px" fontWeight={500}>
+								{getPercentage()}%
+							</Text>
+						</Flex>
+					</Box>
+					<Flex mt={4} justifyContent={"flex-end"}>
+						<Text
+							fontSize="12px"
+							fontWeight={500}
+							textDecoration={"underline"}
+							cursor={"pointer"}
+							onClick={donorsOnOpen}
+							color="blue"
+						>
+							View Donors
+						</Text>
+					</Flex>
 					<Stack
 						width={"100%"}
 						mt={"2rem"}
@@ -325,6 +367,46 @@ export const DonationCard = ({
 						</Button>
 						<Button onClick={onClose}>Cancel</Button>
 					</ModalFooter>
+				</ModalContent>
+			</Modal>
+			<Modal isOpen={donorsIsOpen} onClose={donorsOnClose} size={"lg"}>
+				<ModalOverlay />
+				<ModalContent>
+					<ModalHeader>View Top Donors</ModalHeader>
+					<ModalCloseButton />
+					<ModalBody p={10}>
+						<Box mt={"4"} mx={10}>
+							{(!donors || !donors.length) && (
+								<Box
+									alignItems={"center"}
+									justifyContent={"center"}
+									width="100%"
+								>
+									<Text textAlign={"center"}>No current donor</Text>
+								</Box>
+							)}
+							{donors &&
+								donors.map(
+									(donor: { donor: string; amount: bigint }, idx: number) => (
+										<Box
+											key={idx}
+											mb={4}
+											display={"flex"}
+											justifyContent={"center"}
+											alignItems={"center"}
+										>
+											<Text fontWeight={500}>{idx + 1}.</Text>
+											<Box ml={5}>
+												<Text fontWeight={700}>{donor.donor}</Text>
+												<Text fontWeight={500} fontSize={14}>
+													Total: {formatEther(donor.amount)}
+												</Text>
+											</Box>
+										</Box>
+									)
+								)}
+						</Box>
+					</ModalBody>
 				</ModalContent>
 			</Modal>
 		</Center>

@@ -38,7 +38,7 @@ import {
 	CardBody,
 } from "@chakra-ui/react";
 
-const DONATION_CONTRACT_ADDRESS = "0x26f04253AADB78789833De8B2444929781cB85F7";
+const DONATION_CONTRACT_ADDRESS = "0x72458067342C7c87Ba4D93Dbc251C16d7A576C2c";
 
 const NavBar = () => {
 	const { address, isConnected } = useAccount();
@@ -247,8 +247,14 @@ export default function Home() {
 	const { data = [], isLoading: loadingAllCauses } = useContractRead(
 		contractOpts("getAllCauses")
 	);
+	const { data: topDonors = [], isLoading: loadingTopDonors } = useContractRead(
+		contractOpts("getOverallTopDonors")
+	);
 
 	const donationRequests: any = data;
+
+	const donors: any = topDonors;
+
 	const { isOpen, onOpen, onClose } = useDisclosure();
 
 	const { write: createCause, isLoading } = useContractWrite({
@@ -270,47 +276,88 @@ export default function Home() {
 
 	const toast = useToast();
 
-	console.log(donationRequests);
-
 	return (
 		<>
 			<NavBar />
-			<Flex alignItems={"center"} justifyContent={"center"} mt={4}>
-				<Button onClick={onOpen}>Request Donation</Button>
-			</Flex>
 			<ClientOnly>
-				<Flex
-					mx={{ sm: 2, md: 8 }}
-					flexDirection={{ base: "column", md: "row" }}
-				>
-					{loadingAllCauses && (
-						<Flex
-							justifyContent={"center"}
-							alignItems={"center"}
-							width={"100vw"}
-							height="400px"
-						>
-							<Spinner size="xl" />
+				<Flex flexDirection={{ base: "column", md: "row" }}>
+					<Box width="60%" mx={{ sm: 2, md: 8 }}>
+						<Flex alignItems={"center"} justifyContent={"space-between"} mt={4}>
+							<Text fontSize="xl" fontWeight={700}>
+								Campaigns
+							</Text>
+							<Button onClick={onOpen} variant={"outline"}>
+								Request Donation
+							</Button>
 						</Flex>
-					)}
-					{donationRequests &&
-						!loadingAllCauses &&
-						donationRequests.map((item: any, index: number) => (
-							<DonationCard
-								key={index}
-								index={index + 1}
-								title={item.name}
-								description={item.description}
-								address={address}
-								contractOpts={contractOpts}
-								loggedInAddress={item.beneficiary}
-								withdrawalAmount={formatEther(item?.withdrawnAmount || 0)}
-								closed={item?.closed}
-								imageUrl={item.imageUrl}
-								currentAmount={formatEther(item.currentAmount)}
-								target={formatEther(item.goalAmount)}
-							/>
-						))}
+						<Flex flexDirection={{ base: "column", md: "row" }}>
+							{loadingAllCauses && (
+								<Flex
+									justifyContent={"center"}
+									alignItems={"center"}
+									width={"100vw"}
+									height="400px"
+								>
+									<Spinner size="xl" />
+								</Flex>
+							)}
+							{donationRequests &&
+								!loadingAllCauses &&
+								donationRequests.map((item: any, index: number) => (
+									<DonationCard
+										key={index}
+										index={index + 1}
+										title={item.name}
+										description={item.description}
+										address={address}
+										contractOpts={contractOpts}
+										loggedInAddress={item.beneficiary}
+										withdrawalAmount={formatEther(item?.withdrawnAmount || 0)}
+										closed={item?.closed}
+										imageUrl={item.imageUrl}
+										currentAmount={formatEther(item.currentAmount)}
+										target={formatEther(item.goalAmount)}
+									/>
+								))}
+						</Flex>
+					</Box>
+					<Box borderLeft={"1px solid #ededf2"} height="100vh" pl="4">
+						<Text fontSize="xl" fontWeight={700} mt={4}>
+							Leaderboards / Top Donors
+						</Text>
+
+						<Box mt={"4"}>
+							{(!donors || !donors.length) && (
+								<Box
+									alignItems={"center"}
+									justifyContent={"center"}
+									width="100%"
+								>
+									<Text textAlign={"center"}>No current leader</Text>
+								</Box>
+							)}
+							{donors &&
+								donors.map(
+									(donor: { donor: string; amount: bigint }, idx: number) => (
+										<Box
+											key={idx}
+											mb={4}
+											display={"flex"}
+											justifyContent={"center"}
+											alignItems={"center"}
+										>
+											<Text fontWeight={500}>{idx + 1}.</Text>
+											<Box ml={5}>
+												<Text fontWeight={700}>{donor.donor}</Text>
+												<Text fontWeight={500} fontSize={14}>
+													Total: {formatEther(donor.amount)}
+												</Text>
+											</Box>
+										</Box>
+									)
+								)}
+						</Box>
+					</Box>
 				</Flex>
 			</ClientOnly>
 			<CreateCause
