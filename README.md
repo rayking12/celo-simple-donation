@@ -2,7 +2,7 @@
 
 [Demo dApp](https://celo-simple-donation.vercel.app/)
 
-This project is a simple decentralized application (DApp) that allows users to request donations  and  withdraw donations in ERC-20 standart tokens. NFTs follow the ERC1155 standart. The project uses the Celo blockchain (compatible with the Ethereum Virtual Machine).
+This project is a simple decentralized application (DApp) that allows users to request donations  and  withdraw donations in ERC-20 standart tokens. The project uses the Celo blockchain (compatible with the Ethereum Virtual Machine).
 
 ## Getting Started
 

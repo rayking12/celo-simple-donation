@@ -54,7 +54,7 @@ const NavBar = () => {
 				title: "Error",
 				description:
 					error.name === "ConnectorNotFoundError"
-						? "Please install the CeloExtensionWallet."
+						? "Please install an extension wallet."
 						: error.message,
 				position: "top-right",
 				status: "error",
