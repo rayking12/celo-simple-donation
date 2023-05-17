@@ -34,6 +34,9 @@ The smart contracts are written in Solidity and are based on OpenZeppelin contra
 - `requestDonation(uint256 causeId, uint256 amount)` - Withdraw available donations.
 - `closeCause(uint256 causeId)` - Close donations.
 - `getAllCauses()` -get all donation requests
+- `updateTopDonors()` - handles logic for specific top donors and overall top donors
+- `getTopDonors()` -get top donors for a specific campaign
+- `getOverallTopDonors()` -get all top 10 donors
 
 ## Contributing
 
