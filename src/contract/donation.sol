@@ -19,6 +19,14 @@ contract Donation {
         uint256 amount;
     }
 
+    address owner;
+
+    constructor() {
+        owner = msg.sender;
+    }
+
+
+
 
     mapping(uint256 => Cause) public causes;
     mapping(uint256 => TopDonor[]) public topDonors;
@@ -27,16 +35,23 @@ contract Donation {
 
     event DonationMade(uint256 causeId, address donor, uint256 amount);
     event DonationReceived(uint256 causeId, address donor, uint256 amount);
+    event CauseClosed(uint256 causeId, address indexed beneficiary);
 
     function createCause(string memory name, address payable beneficiary, string memory description, uint256 goalAmount, string memory imageUrl) public {
+        require(msg.sender == owner, "Only the contract owner can call this function");
+        require(bytes(name).length > 0, "Name cannot be empty");
+        require(bytes(description).length > 0, "Description cannot be empty");
+        require(goalAmount > 0, "Goal amount must be greater than zero");
+        require(bytes(imageUrl).length > 0, "Image URL cannot be empty");
         causeCount++;    
     
         causes[causeCount] = Cause(name, description, beneficiary, goalAmount, 0, 0, false, imageUrl);
     }
 
-      function donate(uint256 causeId) public payable {
+    function donate(uint256 causeId) public payable {
         Cause storage cause = causes[causeId];
         require(!cause.closed, "Cause is closed");
+        require(msg.value > 0, "Donation amount must be greater than zero");
 
         cause.currentAmount += msg.value;
         emit DonationMade(causeId, msg.sender, msg.value);
@@ -45,17 +60,19 @@ contract Donation {
     }
 
    function getTopDonors(uint256 causeId) public view returns (TopDonor[] memory) {
-        return topDonors[causeId];
+       require(causeId <= causeCount, "Invalid cause ID");
+       return topDonors[causeId];
     }
 
     function getOverallTopDonors() public view returns (TopDonor[] memory) {
         return overallTopDonors;
     }
-function updateTopDonors(
-    uint256 causeId,
-    address donor,
-    uint256 amount
-) internal {
+
+    function updateTopDonors(
+        uint256 causeId,
+        address donor,
+        uint256 amount
+    ) internal {
     TopDonor[] storage causeDonors = topDonors[causeId];
     TopDonor[] storage allDonors = overallTopDonors;
 
@@ -120,16 +137,19 @@ function updateTopDonors(
 
             if (amount > minValue) {
                 allDonors[minIndex] = TopDonor(donor, amount);
+                }
             }
         }
     }
-}
 
 
 
     function requestDonation(uint256 causeId, uint256 amount) public {
         Cause storage cause = causes[causeId];
         require(!cause.closed, "Cause is closed");
+        require(amount > 0, "Requested amount must be greater than zero");
+        require(amount <= cause.currentAmount, "Requested amount exceeds the available funds");
+
 
         cause.beneficiary.transfer(amount);
         cause.withdrawnAmount += amount;
@@ -138,11 +158,13 @@ function updateTopDonors(
 
 
 
-    function closeCause(uint256 causeId) public {
+    function closeCause(uint256 causeId) public  {
         Cause storage cause = causes[causeId];
+        require(causeId <= causeCount, "Invalid cause ID");
         require(cause.beneficiary == msg.sender, "Only beneficiary can close cause");
 
         cause.closed = true;
+        emit CauseClosed(causeId, cause.beneficiary);
     }
     
     function getAllCauses() public view returns (Cause[] memory) {
@@ -153,5 +175,7 @@ function updateTopDonors(
     }
 
     return allCauses;
-}
+    }
+
+
 }
