@@ -38,7 +38,7 @@ import {
 	CardBody,
 } from "@chakra-ui/react";
 
-const DONATION_CONTRACT_ADDRESS = "0x72458067342C7c87Ba4D93Dbc251C16d7A576C2c";
+const DONATION_CONTRACT_ADDRESS = "0x459D940A3CC8EF723fF41Ed85Baa54Bf6Bed93C8";
 
 const NavBar = () => {
 	const { address, isConnected } = useAccount();
