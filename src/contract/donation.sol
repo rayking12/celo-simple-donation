@@ -34,15 +34,19 @@ contract Donation {
         causes[causeCount] = Cause(name, description, beneficiary, goalAmount, 0, 0, false, imageUrl);
     }
 
-      function donate(uint256 causeId) public payable {
+        function donate(uint256 causeId) public payable {
         Cause storage cause = causes[causeId];
         require(!cause.closed, "Cause is closed");
+
+        uint256 remainingAmount = cause.goalAmount - cause.currentAmount;
+        require(msg.value <= remainingAmount, "Donation amount exceeds the remaining goal amount");
 
         cause.currentAmount += msg.value;
         emit DonationMade(causeId, msg.sender, msg.value);
 
         updateTopDonors(causeId, msg.sender, msg.value);
     }
+
 
    function getTopDonors(uint256 causeId) public view returns (TopDonor[] memory) {
         return topDonors[causeId];
