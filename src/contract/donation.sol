@@ -53,11 +53,15 @@ contract Donation {
         require(!cause.closed, "Cause is closed");
         require(msg.value > 0, "Donation amount must be greater than zero");
 
+        uint256 remainingAmount = cause.goalAmount - cause.currentAmount;
+        require(msg.value <= remainingAmount, "Donation amount exceeds the remaining goal amount");
+
         cause.currentAmount += msg.value;
         emit DonationMade(causeId, msg.sender, msg.value);
 
         updateTopDonors(causeId, msg.sender, msg.value);
     }
+
 
    function getTopDonors(uint256 causeId) public view returns (TopDonor[] memory) {
        require(causeId <= causeCount, "Invalid cause ID");
