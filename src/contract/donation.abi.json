@@ -1,5 +1,29 @@
 [
 	{
+		"inputs": [],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "causeId",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "beneficiary",
+				"type": "address"
+			}
+		],
+		"name": "CauseClosed",
+		"type": "event"
+	},
+	{
 		"anonymous": false,
 		"inputs": [
 			{
