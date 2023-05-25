@@ -40,6 +40,7 @@ import {
 
 const DONATION_CONTRACT_ADDRESS = "0xC9574142CC858972655D3D2224b3448f16396cc9";
 
+
 const NavBar = () => {
 	const { address, isConnected } = useAccount();
 	const toast = useToast();
