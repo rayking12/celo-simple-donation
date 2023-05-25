@@ -38,7 +38,8 @@ contract Donation {
     event CauseClosed(uint256 causeId, address indexed beneficiary);
 
     function createCause(string memory name, address payable beneficiary, string memory description, uint256 goalAmount, string memory imageUrl) public {
-        require(msg.sender == owner, "Only the contract owner can call this function");
+        // require(msg.sender == owner, "Only the contract owner can call this function");
+        payable(msg.sender);
         require(bytes(name).length > 0, "Name cannot be empty");
         require(bytes(description).length > 0, "Description cannot be empty");
         require(goalAmount > 0, "Goal amount must be greater than zero");
