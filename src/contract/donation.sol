@@ -39,16 +39,22 @@ contract Donation {
         owner = msg.sender;
     }
 
-    function createCause(string memory name, address payable beneficiary, string memory description, uint256 goalAmount, string memory imageUrl) public {
+    /**
+     * @dev Create a new cause.
+     */
+    function createCause(string memory name, address payable beneficiary, string memory description, uint256 goalAmount, string memory imageUrl) public onlyOwner {
         require(bytes(name).length > 0, "Name cannot be empty");
         require(bytes(description).length > 0, "Description cannot be empty");
         require(goalAmount > 0, "Goal amount must be greater than zero");
         require(bytes(imageUrl).length > 0, "Image URL cannot be empty");
-        
+
         causeCount++;
         causes[causeCount] = Cause(name, description, beneficiary, goalAmount, 0, 0, CauseStatus.Open, imageUrl);
     }
 
+    /**
+     * @dev Make a donation to a cause.
+     */
     function donate(uint256 causeId) public payable {
         Cause storage cause = causes[causeId];
         require(cause.status == CauseStatus.Open, "Cause is closed");
@@ -61,15 +67,24 @@ contract Donation {
         updateTopDonors(causeId, msg.sender, msg.value);
     }
 
+    /**
+     * @dev Get the top donors for a specific cause.
+     */
     function getTopDonors(uint256 causeId) public view returns (TopDonor[] memory) {
         require(causeId <= causeCount, "Invalid cause ID");
         return topDonors[causeId];
     }
 
+    /**
+     * @dev Get the overall top donors.
+     */
     function getOverallTopDonors() public view returns (TopDonor[] memory) {
         return overallTopDonors;
     }
 
+    /**
+     * @dev Update the top donors for a cause and overall.
+     */
     function updateTopDonors(uint256 causeId, address donor, uint256 amount) internal {
         TopDonor[] storage causeDonors = topDonors[causeId];
         TopDonor[] storage allDonors = overallTopDonors;
@@ -140,6 +155,9 @@ contract Donation {
         }
     }
 
+    /**
+     * @dev Request a withdrawal of donated funds for a cause.
+     */
     function requestDonation(uint256 causeId, uint256 amount) public {
         Cause storage cause = causes[causeId];
         require(cause.status == CauseStatus.Open, "Cause is closed");
@@ -147,10 +165,14 @@ contract Donation {
         require(amount <= cause.currentAmount, "Requested amount exceeds the available funds");
 
         cause.beneficiary.transfer(amount);
+        cause.currentAmount -= amount;
         cause.withdrawnAmount += amount;
         emit DonationReceived(causeId, msg.sender, amount);
     }
 
+    /**
+     * @dev Close a cause.
+     */
     function closeCause(uint256 causeId) public {
         Cause storage cause = causes[causeId];
         require(causeId <= causeCount, "Invalid cause ID");
@@ -160,6 +182,9 @@ contract Donation {
         emit CauseClosed(causeId, cause.beneficiary);
     }
 
+    /**
+     * @dev Get all causes.
+     */
     function getAllCauses() public view returns (Cause[] memory) {
         Cause[] memory allCauses = new Cause[](causeCount);
 
