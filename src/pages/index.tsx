@@ -38,8 +38,7 @@ import {
 	CardBody,
 } from "@chakra-ui/react";
 
-const DONATION_CONTRACT_ADDRESS = "0xC9574142CC858972655D3D2224b3448f16396cc9";
-
+const DONATION_CONTRACT_ADDRESS = "0x7BeDbB247Fffe63Bcb38feab577E5aB097f9472D";
 
 const NavBar = () => {
 	const { address, isConnected } = useAccount();
@@ -276,7 +275,7 @@ export default function Home() {
 	const { address } = useAccount();
 
 	const toast = useToast();
-
+	console.log(donationRequests);
 	return (
 		<>
 			<NavBar />
@@ -314,7 +313,7 @@ export default function Home() {
 										contractOpts={contractOpts}
 										loggedInAddress={item.beneficiary}
 										withdrawalAmount={formatEther(item?.withdrawnAmount || 0)}
-										closed={item?.closed}
+										closed={item?.status === 1}
 										imageUrl={item.imageUrl}
 										currentAmount={formatEther(item.currentAmount)}
 										target={formatEther(item.goalAmount)}
